@@ -328,12 +328,12 @@ end
 
 local ev = defines.events
 script.on_event(ev.on_player_selected_area, function(event)
-    if not event.item == "rdp-segment-planner" then return end
+    if event.item ~= "rdp-segment-planner" then return end
 
     mark_segments(event.entities, event.player_index)
 end)
 script.on_event(ev.on_player_alt_selected_area, function(event)
-    if not event.item == "rdp-segment-planner" then return end
+    if event.item ~= "rdp-segment-planner" then return end
 
     unmark_segments(event.entities, event.player_index)
 end)
