@@ -5,7 +5,7 @@
   "author": "fgardt",
   "contact": "https://discord.gg/6KyFmHWKub",
   "homepage": "https://github.com/fgardt/factorio-rail-decon-planner",
-  "description": "Provides a special deconstruction planner (ALT + F) that can mark entire rail segments for deconstruction at once. You can also just press the same hotkey while hovering a rail or signal to mark/unmark it for deconstruction.",
+  "description": "Provides a special deconstruction planner (ALT + F) that can mark entire rail segments for deconstruction at once. You can also just press the same hotkey while hovering a rail or signal to mark/unmark it for deconstruction.\n\nKnown limitation: deconstruction/deletion of ghosts is not possible.",
   "factorio_version": "1.1",
   "dependencies": [
     "base"

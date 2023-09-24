@@ -30,7 +30,7 @@ local function get_connected_segments(rail, direction)
     local res = {}
 
     if not rail or not rail.valid then return res end
-    if not rail.type == "rail" and not rail.type == "curved-rail" then return res end
+    if not (rail.type == "straight-rail" or rail.type == "curved-rail") then return res end
 
     for traverse_name, traverse_dir in pairs(defines.rail_connection_direction) do
         if traverse_name == "none" then goto continue end
@@ -133,7 +133,7 @@ local function get_rail_segments(start)
     local stations = {} ---@type table<uint, LuaEntity>
 
     if not start or not start.valid then return rails, signals, stations end
-    if not start.type == "rail" and not start.type == "curved-rail" then return rails, signals, stations end
+    if not (start.type == "straight-rail" or start.type == "curved-rail") then return rails, signals, stations end
 
     --------------------------------
     --- Initial selected segment ---
