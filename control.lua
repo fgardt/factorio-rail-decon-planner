@@ -238,19 +238,35 @@ end
 local function mark_segments(entities, player_index)
     local force_index = game.get_player(player_index).force_index --[[@as uint8]]
     for _, entity in pairs(entities) do
+        if not entity or not entity.valid then goto continue end
         if entity.to_be_deconstructed() then goto continue end
 
         local rails, signals, stations = get_rail_segments(entity)
         for _, rail in pairs(rails) do
+            -- other event handlers could've deleted the rail
+            if not rail.valid then goto continue end
+
             rail.order_deconstruction(force_index, player_index)
+
+            ::continue::
         end
 
         for _, signal in pairs(signals) do
+            -- other event handlers could've deleted the signal
+            if not signal.valid then goto continue end
+
             signal.order_deconstruction(force_index, player_index)
+
+            ::continue::
         end
 
         for _, station in pairs(stations) do
+            -- other event handlers could've deleted the station
+            if not station.valid then goto continue end
+
             station.order_deconstruction(force_index, player_index)
+
+            ::continue::
         end
 
         ::continue::
@@ -262,16 +278,29 @@ end
 local function unmark_segments(entities, player_index)
     local force_index = game.get_player(player_index).force_index --[[@as uint8]]
     for _, entity in pairs(entities) do
+        if not entity or not entity.valid then goto continue end
         if not entity.to_be_deconstructed() then goto continue end
 
         -- signals marked for decon can not be found this way
         local rails, _signals, stations = get_rail_segments(entity)
         for _, rail in pairs(rails) do
+            -- other event handlers could've deleted the rail
+            if not rail.valid then goto continue end
+
             rail.cancel_deconstruction(force_index, player_index)
+
+            -- other event handlers could've deleted the rail
+            if not rail.valid then goto continue end
 
             local signals = find_deconstructed_rail_signals(rail)
             for _, signal in pairs(signals) do
+                -- other event handlers could've deleted the signal
+                if not signal.valid then goto continue end
+
                 signal.cancel_deconstruction(force_index, player_index)
+
+                -- other event handlers could've deleted the signal
+                if not signal.valid then goto continue end
 
                 -- check if signal is actually connected to this rail
                 for _, signal_rail in pairs(signal.get_connected_rails()) do
@@ -285,7 +314,12 @@ local function unmark_segments(entities, player_index)
         end
 
         for _, station in pairs(stations) do
+            -- other event handlers could've deleted the station
+            if not station.valid then goto continue end
+
             station.cancel_deconstruction(force_index, player_index)
+
+            ::continue::
         end
 
         ::continue::
