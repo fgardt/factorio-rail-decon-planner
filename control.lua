@@ -304,7 +304,6 @@ local function unmark_segments(entities, player_index)
             rail.cancel_deconstruction(force_index, player_index)
 
             if mark_signals then
-
                 -- other event handlers could've deleted the rail
                 if not rail.valid then goto continue end
 
@@ -434,7 +433,7 @@ local function give_planner(event)
         end
 
         if did_something then
-            if not player.is_cursor_empty() and player.cursor_stack.name == "rdp-segment-planner" then
+            if not player.is_cursor_empty() and player.cursor_stack.valid_for_read and player.cursor_stack.name == "rdp-segment-planner" then
                 player.clear_cursor()
             end
 
