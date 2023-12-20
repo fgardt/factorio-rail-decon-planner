@@ -1,4 +1,11 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.1.0
+Date: 2023-12-20
+  Bugfixes:
+    - fixed a crash when the cursor item stack was not readable
+  Features:
+    - added per-player settings to mark signals and train stops
+---------------------------------------------------------------------------------------------------
 Version: 1.0.3
 Date: 2023-09-26
   Bugfixes:
