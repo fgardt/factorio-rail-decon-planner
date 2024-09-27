@@ -17,6 +17,27 @@ local function debug_draw_entities(entities)
     end
 end
 
+local rail_types = {
+    ["legacy-straight-rail"] = true,
+    ["legacy-curved-rail"] = true,
+
+    ["straight-rail"] = true,
+    ["curved-rail-a"] = true,
+    ["curved-rail-b"] = true,
+    ["half-diagonal-rail"] = true,
+
+    ["rail-ramp"] = true,
+    ["elevated-straight-rail"] = true,
+    ["elevated-curved-rail-a"] = true,
+    ["elevated-curved-rail-b"] = true,
+    ["elevated-half-diagonal-rail"] = true,
+}
+
+local signal_types = {
+    ["rail-signal"] = true,
+    ["rail-chain-signal"] = true,
+}
+
 local rd = defines.rail_direction
 
 ---@class SegmentConnection
@@ -32,7 +53,7 @@ local function get_connected_segments(rail, direction)
     local res = {}
 
     if not rail or not rail.valid then return res end
-    if not (rail.type == "straight-rail" or rail.type == "curved-rail") then return res end
+    if not rail_types[rail.type] then return res end
 
     for traverse_name, traverse_dir in pairs(defines.rail_connection_direction) do
         if traverse_name == "none" then goto continue end
@@ -99,18 +120,17 @@ end
 ---@param connection SegmentConnection
 ---@return LuaEntity[] stations
 local function get_stations(connection)
-    local direction = flip_direction(connection.direction)
-    local entrance = connection.rail.get_rail_segment_entity(direction, true)
-    local exit = connection.rail.get_rail_segment_entity(direction, false)
+    local front = connection.rail.get_rail_segment_stop(rd.front)
+    local back = connection.rail.get_rail_segment_stop(rd.back)
 
     local res = {} ---@type LuaEntity[]
 
-    if entrance and entrance.valid and entrance.type == "train-stop" then
-        table.insert(res, entrance)
+    if front and front.valid then
+        table.insert(res, front)
     end
 
-    if exit and exit.valid and exit.type == "train-stop" then
-        table.insert(res, exit)
+    if back and back.valid then
+        table.insert(res, back)
     end
 
     return res
@@ -135,7 +155,7 @@ local function get_rail_segments(start)
     local stations = {} ---@type table<uint, LuaEntity>
 
     if not start or not start.valid then return rails, signals, stations end
-    if not (start.type == "straight-rail" or start.type == "curved-rail") then return rails, signals, stations end
+    if not rail_types[start.type] then return rails, signals, stations end
 
     --------------------------------
     --- Initial selected segment ---
@@ -406,7 +426,7 @@ local function give_planner(event)
         local type = selected_proto.derived_type
         local did_something = false
 
-        if type == "straight-rail" or type == "curved-rail" then
+        if rail_types[type] then
             if player.selected.to_be_deconstructed() then
                 unmark_segments({ player.selected }, event.player_index)
             else
@@ -416,7 +436,7 @@ local function give_planner(event)
             did_something = true
         end
 
-        if type == "rail-signal" or type == "rail-chain-signal" then
+        if signal_types[type] then
             local signal = player.selected --[[@as LuaEntity]]
 
             if not signal.to_be_deconstructed() then

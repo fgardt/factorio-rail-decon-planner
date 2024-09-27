@@ -1,6 +1,20 @@
 local decon_planner = data.raw["deconstruction-item"]["deconstruction-planner"]
 
-local entity_filters = { "straight-rail", "curved-rail" }
+local entity_filters = {
+    "legacy-straight-rail",
+    "legacy-curved-rail",
+
+    "straight-rail",
+    "curved-rail-a",
+    "curved-rail-b",
+    "half-diagonal-rail",
+
+    "rail-ramp",
+    "elevated-straight-rail",
+    "elevated-curved-rail-a",
+    "elevated-curved-rail-b",
+    "elevated-half-diagonal-rail",
+}
 
 data:extend({
     {
@@ -19,36 +33,36 @@ data:extend({
                 scale = 0.375,
             }
         },
-        flags = { "hidden", "only-in-cursor", "not-stackable", "spawnable" },
+        hidden = true,
+        flags = { "only-in-cursor", "not-stackable", "spawnable" },
         order = "e[deconstruction-planner]-rail",
         localised_name = { "shortcut-name.rdp-give-planner" },
         draw_label_for_cursor_render = true,
         stack_size = 1,
 
-        selection_cursor_box_type = "not-allowed",
-        alt_selection_cursor_box_type = "not-allowed",
+        select = {
+            cursor_box_type = "not-allowed",
+            mode = { "deconstruct" },
 
-        selection_mode = { "deconstruct" },
-        alt_selection_mode = { "cancel-deconstruct" },
-        reverse_selection_mode = { "nothing" },     --{ "deconstruct" },
-        alt_reverse_selection_mode = { "nothing" }, --{ "cancel-deconstruct" },
+            border_color = table.deepcopy(decon_planner.select.border_color),
+            count_button_color = table.deepcopy(decon_planner.select.count_button_color),
 
-        selection_color = table.deepcopy(decon_planner.selection_color),
-        alt_selection_color = table.deepcopy(decon_planner.alt_selection_color),
-        reverse_selection_color = { r = 0, g = 0, b = 0, a = 0 },
-        alt_reverse_selection_color = { r = 0, g = 0, b = 0, a = 0 },
+            entity_type_filters = entity_filters,
+            entity_filter_mode = "whitelist",
+        },
 
-        selection_count_button_color = table.deepcopy(decon_planner.selection_count_button_color),
-        alt_selection_count_button_color = table.deepcopy(decon_planner.alt_selection_count_button_color),
+        alt_select = {
+            cursor_box_type = "not-allowed",
+            mode = { "deconstruct" },
 
-        entity_type_filters = entity_filters,
-        alt_entity_type_filters = entity_filters,
-        --reverse_entity_type_filters = entity_filters,
-        --alt_reverse_entity_type_filters = entity_filters,
+            border_color = table.deepcopy(decon_planner.select.border_color),
+            count_button_color = table.deepcopy(decon_planner.select.count_button_color),
 
-        entity_filter_mode = "whitelist",
-        alt_entity_filter_mode = "whitelist",
-        --reverse_entity_filter_mode = "whitelist",
-        --alt_reverse_entity_filter_mode = "whitelist",
+            entity_type_filters = entity_filters,
+            entity_filter_mode = "whitelist",
+        },
+
+        -- reverse_selection_mode = { "nothing" },     --{ "deconstruct" },
+        -- alt_reverse_selection_mode = { "nothing" }, --{ "cancel-deconstruct" },
     }
 })

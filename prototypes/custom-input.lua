@@ -7,7 +7,7 @@ data:extend({
         include_selected_prototype = true,
         action = "lua",
         order = "a",
-    },
+    } --[[@as data.CustomInputPrototype]],
     {
         type = "shortcut",
         name = "rdp-give-planner",
@@ -16,13 +16,15 @@ data:extend({
         associated_control_input = "rdp-give-planner",
         --technology_to_unlock = "railway",
         style = "red",
-        icon = {
-            filename = "__base__/graphics/icons/rail.png",
-            priority = "extra-high-no-scale",
-            size = 64,
+        icons = { {
+            icon = "__base__/graphics/icons/rail.png",
+            icon_size = 64,
             scale = 0.25,
-            mipmap_count = 1,
-            flags = { "gui-icon" },
-        }
-    }
+        } },
+        small_icons = { {
+            icon = "__base__/graphics/icons/rail.png",
+            icon_size = 64,
+            scale = 0.25,
+        } },
+    } --[[@as data.ShortcutPrototype]]
 })
