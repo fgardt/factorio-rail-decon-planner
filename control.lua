@@ -33,6 +33,13 @@ local rail_types = {
     ["elevated-half-diagonal-rail"] = true,
 }
 
+local elevated_rail_types = {
+    ["elevated-straight-rail"] = true,
+    ["elevated-curved-rail-a"] = true,
+    ["elevated-curved-rail-b"] = true,
+    ["elevated-half-diagonal-rail"] = true,
+}
+
 local signal_types = {
     ["rail-signal"] = true,
     ["rail-chain-signal"] = true,
@@ -44,6 +51,18 @@ local rd = defines.rail_direction
 ---@field rail LuaEntity
 ---@field direction defines.rail_direction
 ---@field back_direction defines.rail_connection_direction
+
+---@param a MapPosition
+---@param b MapPosition
+---@return boolean
+local function same_position(a, b)
+    local x1 = a.x or a[1]
+    local y1 = a.y or a[2]
+    local x2 = b.x or b[1]
+    local y2 = b.y or b[2]
+
+    return x1 == x2 and y1 == y2
+end
 
 ---@param rail LuaEntity?
 ---@param direction defines.rail_direction
@@ -141,6 +160,89 @@ end
 local function get_signals(rail)
     local res = rail.get_inbound_signals()
     append_table(res, rail.get_outbound_signals())
+
+    return res
+end
+
+---@param rail LuaEntity
+---@return LuaEntity[] supports
+local function get_supports_from_rail(rail)
+    if not rail or not rail.valid or not elevated_rail_types[rail.type] then return {} end
+
+    local surface = rail.surface
+    local tmp = {} ---@type table<uint, LuaEntity>
+
+    local front_location = rail.get_rail_end(rd.front).location
+    local back_location = rail.get_rail_end(rd.back).location
+
+    local front_direction = front_location.direction % 8
+    local back_direction = back_location.direction % 8
+
+    for _, support in pairs(surface.find_entities_filtered({
+        type = "rail-support",
+        position = front_location.position,
+    })) do
+        if not support.valid or front_direction ~= (support.direction % 8) then goto continue end
+
+        tmp[support.unit_number] = support
+
+        ::continue::
+    end
+
+    for _, support in pairs(surface.find_entities_filtered({
+        type = "rail-support",
+        position = back_location.position,
+    })) do
+        if not support.valid or back_direction ~= (support.direction % 8) then goto continue end
+
+        tmp[support.unit_number] = support
+
+        ::continue::
+    end
+
+    local res = {} ---@type LuaEntity[]
+
+    for _, support in pairs(tmp) do
+        table.insert(res, support)
+    end
+
+    return res
+end
+
+---@param support LuaEntity
+---@return LuaEntity[] rails
+local function get_rails_from_support(support)
+    if not support or not support.valid or support.type ~= "rail-support" then return {} end
+
+    local res = {} ---@type LuaEntity[]
+    local surface = support.surface
+    local direction = support.direction % 8
+    local position = support.position
+
+    for _, rail in pairs(surface.find_entities_filtered({
+        type = {
+            "elevated-straight-rail",
+            "elevated-curved-rail-a",
+            "elevated-curved-rail-b",
+            "elevated-half-diagonal-rail",
+        },
+        area = {
+            left_top = { x = position.x - 2.1, y = position.y - 2.1 },
+            right_bottom = { x = position.x + 2.1, y = position.y + 2.1 },
+        },
+    })) do
+        if not rail.valid then goto continue end
+
+        local front_location = rail.get_rail_end(rd.front).location
+        local back_location = rail.get_rail_end(rd.back).location
+
+        if (same_position(front_location.position, position) and direction == (front_location.direction % 8)) or
+            (same_position(back_location.position, position) and direction == (back_location.direction % 8)) then
+            table.insert(res, rail)
+        end
+
+        ::continue::
+    end
 
     return res
 end
@@ -263,6 +365,8 @@ local function mark_segments(entities, player_index)
     local mark_signals = settings[const.mark_signals].value
     local mark_stations = settings[const.mark_stations].value
 
+    local supports = {} ---@type table<uint, LuaEntity>
+
     for _, entity in pairs(entities) do
         if not entity or not entity.valid then goto continue end
         if entity.to_be_deconstructed() then goto continue end
@@ -271,6 +375,10 @@ local function mark_segments(entities, player_index)
         for _, rail in pairs(rails) do
             -- other event handlers could've deleted the rail
             if not rail.valid then goto continue end
+
+            for _, support in pairs(get_supports_from_rail(rail)) do
+                supports[support.unit_number] = support
+            end
 
             rail.order_deconstruction(force_index, player_index)
 
@@ -298,6 +406,22 @@ local function mark_segments(entities, player_index)
                 ::continue::
             end
         end
+
+        ::continue::
+    end
+
+    for _, support in pairs(supports) do
+        if not support.valid then goto continue end
+
+        for _, rail in pairs(get_rails_from_support(support)) do
+            if not rail.valid then goto skip end
+
+            if not rail.to_be_deconstructed() then goto continue end
+
+            ::skip::
+        end
+
+        support.order_deconstruction(force_index, player_index)
 
         ::continue::
     end
@@ -399,16 +523,19 @@ end
 ]]
 
 local ev = defines.events
+
 script.on_event(ev.on_player_selected_area, function(event)
     if event.item ~= "rdp-segment-planner" then return end
 
     mark_segments(event.entities, event.player_index)
 end)
+
 script.on_event(ev.on_player_alt_selected_area, function(event)
     if event.item ~= "rdp-segment-planner" then return end
 
     unmark_segments(event.entities, event.player_index)
 end)
+
 --script.on_event(ev.on_player_reverse_selected_area, mark_blocks)
 --script.on_event(ev.on_player_alt_reverse_selected_area, unmark_blocks)
 
@@ -434,9 +561,7 @@ local function give_planner(event)
             end
 
             did_something = true
-        end
-
-        if signal_types[type] then
+        elseif signal_types[type] then
             local signal = player.selected --[[@as LuaEntity]]
 
             if not signal.to_be_deconstructed() then
@@ -448,6 +573,10 @@ local function give_planner(event)
 
                 unmark_segments(rails, event.player_index)
             end
+
+            did_something = true
+        elseif type == "rail-support" then
+            mark_segments(get_rails_from_support(player.selected), event.player_index)
 
             did_something = true
         end
