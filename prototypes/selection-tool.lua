@@ -16,6 +16,14 @@ local entity_filters = {
     "elevated-half-diagonal-rail",
 }
 
+local disabled_selection = {
+    cursor_box_type = "not-allowed",
+    mode = "nothing",
+
+    border_color = { r = 0, g = 0, b = 0, a = 0 },
+    count_button_color = { r = 0, g = 0, b = 0, a = 0 },
+}
+
 data:extend({
     {
         type = "selection-tool",
@@ -42,7 +50,7 @@ data:extend({
 
         select = {
             cursor_box_type = "not-allowed",
-            mode = { "deconstruct" },
+            mode = "deconstruct",
 
             border_color = table.deepcopy(decon_planner.select.border_color),
             count_button_color = table.deepcopy(decon_planner.select.count_button_color),
@@ -51,18 +59,9 @@ data:extend({
             entity_filter_mode = "whitelist",
         },
 
-        alt_select = {
-            cursor_box_type = "not-allowed",
-            mode = { "deconstruct" },
-
-            border_color = table.deepcopy(decon_planner.select.border_color),
-            count_button_color = table.deepcopy(decon_planner.select.count_button_color),
-
-            entity_type_filters = entity_filters,
-            entity_filter_mode = "whitelist",
-        },
-
-        -- reverse_selection_mode = { "nothing" },     --{ "deconstruct" },
-        -- alt_reverse_selection_mode = { "nothing" }, --{ "cancel-deconstruct" },
+        alt_select = disabled_selection,
+        reverse_select = disabled_selection,
+        alt_reverse_select = disabled_selection,
+        super_forced_select = disabled_selection,
     }
 })

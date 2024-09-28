@@ -338,25 +338,6 @@ local function get_rail_segments(start)
     return rails, signals, stations
 end
 
----@param rail LuaEntity
----@return LuaEntity[]
-local function find_deconstructed_rail_signals(rail)
-    local radius = 2.5
-
-    if rail.type == "curved-rail" then
-        radius = 4.5
-    end
-
-    local signals = rail.surface.find_entities_filtered({
-        type = { "rail-signal", "rail-chain-signal" },
-        to_be_deconstructed = true,
-        position = rail.position,
-        radius = radius,
-    })
-
-    return signals
-end
-
 ---@param entities LuaEntity[]
 ---@param player_index uint
 local function mark_segments(entities, player_index)
@@ -427,101 +408,6 @@ local function mark_segments(entities, player_index)
     end
 end
 
----@param entities LuaEntity[]
----@param player_index uint
-local function unmark_segments(entities, player_index)
-    local force_index = game.get_player(player_index).force_index --[[@as uint8]]
-    local settings = settings.get_player_settings(player_index)
-    local mark_signals = settings[const.mark_signals].value
-    local mark_stations = settings[const.mark_stations].value
-
-    for _, entity in pairs(entities) do
-        if not entity or not entity.valid then goto continue end
-        if not entity.to_be_deconstructed() then goto continue end
-
-        -- signals marked for decon can not be found this way
-        local rails, _signals, stations = get_rail_segments(entity)
-        for _, rail in pairs(rails) do
-            -- other event handlers could've deleted the rail
-            if not rail.valid then goto continue end
-
-            rail.cancel_deconstruction(force_index, player_index)
-
-            if mark_signals then
-                -- other event handlers could've deleted the rail
-                if not rail.valid then goto continue end
-
-                local signals = find_deconstructed_rail_signals(rail)
-                for _, signal in pairs(signals) do
-                    -- other event handlers could've deleted the signal
-                    if not signal.valid then goto continue end
-
-                    signal.cancel_deconstruction(force_index, player_index)
-
-                    -- other event handlers could've deleted the signal
-                    if not signal.valid then goto continue end
-
-                    -- check if signal is actually connected to this rail
-                    for _, signal_rail in pairs(signal.get_connected_rails()) do
-                        if rails[signal_rail.unit_number] ~= nil then goto continue end
-                    end
-
-                    signal.order_deconstruction(force_index, player_index)
-
-                    ::continue::
-                end
-            end
-        end
-
-        if mark_stations then
-            for _, station in pairs(stations) do
-                -- other event handlers could've deleted the station
-                if not station.valid then goto continue end
-
-                station.cancel_deconstruction(force_index, player_index)
-
-                ::continue::
-            end
-        end
-
-        ::continue::
-    end
-end
-
---[[
-
----@param event EventData.on_player_alt_selected_area
-local function mark_blocks(event)
-    local force_index = game.get_player(event.player_index).force_index --@as uint8
-    for _, entity in pairs(event.entities) do
-        if entity.to_be_deconstructed() then goto continue end
-
-        local segment = entity.get_rail_segment_rails(defines.rail_direction.front)
-        for _, rail in pairs(segment) do
-            rail.order_deconstruction(force_index, event.player_index)
-        end
-
-        ::continue::
-    end
-end
-
----@param event EventData.on_player_alt_reverse_selected_area
-local function unmark_blocks(event)
-    local force_index = game.get_player(event.player_index).force_index --@as uint8
-    for _, entity in pairs(event.entities) do
-        if not entity.to_be_deconstructed() then goto continue end
-
-        local segment = entity.get_rail_segment_rails(defines.rail_direction.front)
-        for _, rail in pairs(segment) do
-            rail.cancel_deconstruction(force_index, event.player_index)
-        end
-
-        ::continue::
-    end
-end
-
-]]
-
 local ev = defines.events
 
 script.on_event(ev.on_player_selected_area, function(event)
@@ -529,15 +415,6 @@ script.on_event(ev.on_player_selected_area, function(event)
 
     mark_segments(event.entities, event.player_index)
 end)
-
-script.on_event(ev.on_player_alt_selected_area, function(event)
-    if event.item ~= "rdp-segment-planner" then return end
-
-    unmark_segments(event.entities, event.player_index)
-end)
-
---script.on_event(ev.on_player_reverse_selected_area, mark_blocks)
---script.on_event(ev.on_player_alt_reverse_selected_area, unmark_blocks)
 
 ---@param event
 ---| EventData.on_lua_shortcut
@@ -554,25 +431,17 @@ local function give_planner(event)
         local did_something = false
 
         if rail_types[type] then
-            if player.selected.to_be_deconstructed() then
-                unmark_segments({ player.selected }, event.player_index)
-            else
-                mark_segments({ player.selected }, event.player_index)
-            end
+            mark_segments({ player.selected }, event.player_index)
 
             did_something = true
         elseif signal_types[type] then
             local signal = player.selected --[[@as LuaEntity]]
 
             if not signal.to_be_deconstructed() then
-                mark_segments(signal.get_connected_rails(), event.player_index)
-            else
                 signal.cancel_deconstruction(player.force_index --[[@as uint8]], event.player_index)
-                local rails = signal.get_connected_rails()
-                signal.order_deconstruction(player.force_index --[[@as uint8]], event.player_index)
-
-                unmark_segments(rails, event.player_index)
             end
+
+            mark_segments(signal.get_connected_rails(), event.player_index)
 
             did_something = true
         elseif type == "rail-support" then
