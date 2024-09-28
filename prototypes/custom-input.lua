@@ -2,7 +2,7 @@ data:extend({
     {
         type = "custom-input",
         name = "rdp-give-planner",
-        key_sequence = "ALT + F",
+        key_sequence = "ALT + X",
         localised_name = { "shortcut-name.rdp-give-planner" },
         include_selected_prototype = true,
         action = "lua",
