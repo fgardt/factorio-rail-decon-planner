@@ -1,4 +1,15 @@
 ---------------------------------------------------------------------------------------------------
+Version: 2.0.0
+Date: 2025-01-31
+  Features:
+    - mark rail supports for deconstruction
+  Bugfixes:
+    - fixed some signals being marked for deconstruction while still required
+  Changes:
+    - changed default keybind to ALT + X
+    - ported to 2.0
+    - removed unmarking feature (was suboptimal and hacky, use undo/redo instead)
+---------------------------------------------------------------------------------------------------
 Version: 1.1.0
 Date: 2023-12-20
   Bugfixes:
