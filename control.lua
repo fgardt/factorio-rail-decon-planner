@@ -158,17 +158,27 @@ end
 ---@param rail LuaEntity
 ---@return LuaEntity[] signals
 local function get_signals(rail)
-    local signal_in = rail.get_rail_segment_signal(rd.front, true)
-    local signal_out = rail.get_rail_segment_signal(rd.front, false)
+    local front_in = rail.get_rail_segment_signal(rd.front, true)
+    local front_out = rail.get_rail_segment_signal(rd.front, false)
+    local back_in = rail.get_rail_segment_signal(rd.back, true)
+    local back_out = rail.get_rail_segment_signal(rd.back, false)
 
     local res = {} ---@type LuaEntity[]
 
-    if signal_in and signal_in.valid then
-        table.insert(res, signal_in)
+    if front_in and front_in.valid then
+        table.insert(res, front_in)
     end
 
-    if signal_out and signal_out.valid then
-        table.insert(res, signal_out)
+    if front_out and front_out.valid then
+        table.insert(res, front_out)
+    end
+
+    if back_in and back_in.valid then
+        table.insert(res, back_in)
+    end
+
+    if back_out and back_out.valid then
+        table.insert(res, back_out)
     end
 
     return res
