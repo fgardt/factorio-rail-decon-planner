@@ -1,4 +1,10 @@
 ---------------------------------------------------------------------------------------------------
+Version: 2.0.1
+Date: 2025-01-31
+  Bugfixes:
+    - fixed regression introduced by previous signal deconstruction marking fix
+    - fixed undo/redo queue getting confused with consecutive deconstructions
+---------------------------------------------------------------------------------------------------
 Version: 2.0.0
 Date: 2025-01-31
   Features:
