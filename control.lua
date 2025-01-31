@@ -377,6 +377,9 @@ local function mark_segments(entities, player_index)
             -- other event handlers could've deleted the rail
             if not rail.valid then goto continue end
 
+            -- skip rails that are already marked to prevent undo/redo queue problems
+            if rail.to_be_deconstructed() then goto continue end
+
             for _, support in pairs(get_supports_from_rail(rail)) do
                 supports[support.unit_number] = support
             end
@@ -391,6 +394,9 @@ local function mark_segments(entities, player_index)
                 -- other event handlers could've deleted the signal
                 if not signal.valid then goto continue end
 
+                -- skip signals that are already marked to prevent undo/redo queue problems
+                if signal.to_be_deconstructed() then goto continue end
+
                 signal.order_deconstruction(force_index, player_index)
 
                 ::continue::
@@ -401,6 +407,9 @@ local function mark_segments(entities, player_index)
             for _, station in pairs(stations) do
                 -- other event handlers could've deleted the station
                 if not station.valid then goto continue end
+
+                -- skip stations that are already marked to prevent undo/redo queue problems
+                if station.to_be_deconstructed() then goto continue end
 
                 station.order_deconstruction(force_index, player_index)
 
